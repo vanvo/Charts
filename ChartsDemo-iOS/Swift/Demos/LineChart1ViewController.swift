@@ -10,12 +10,30 @@ import UIKit
 import Charts
 
 class LineChart1ViewController: DemoBaseViewController {
-
+    
     @IBOutlet var chartView: LineChartView!
-    @IBOutlet var sliderX: UISlider!
-    @IBOutlet var sliderY: UISlider!
-    @IBOutlet var sliderTextX: UITextField!
-    @IBOutlet var sliderTextY: UITextField!
+    
+    struct XYAxis {
+        let xAxis: Double
+        let yAxis: Double
+    }
+    
+    var xy: [XYAxis] = [XYAxis(xAxis: 0.0, yAxis: 14.4),
+                       XYAxis(xAxis: 22.884336, yAxis: 14.4),
+                       XYAxis(xAxis: 45.768673, yAxis: 14.4),
+                       XYAxis(xAxis: 68.65301, yAxis: 14.4),
+                       XYAxis(xAxis: 91.537346, yAxis: 14.5),
+                       XYAxis(xAxis: 114.421684, yAxis: 14.5),
+                       XYAxis(xAxis: 137.30602, yAxis: 14.7),
+                       XYAxis(xAxis: 160.19035, yAxis: 14.6),
+                       XYAxis(xAxis: 183.07469, yAxis: 14.6),
+                       XYAxis(xAxis: 209.78403, yAxis: 14.6),
+                       XYAxis(xAxis: 213.60902, yAxis: 14.6),
+                       XYAxis(xAxis: 217.43404, yAxis: 14.6),
+                       XYAxis(xAxis: 222.44443, yAxis: 14.6),
+                       XYAxis(xAxis: 257.7492, yAxis: 14.5)]
+
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,63 +58,76 @@ class LineChart1ViewController: DemoBaseViewController {
                         .toggleData]
 
         chartView.delegate = self
-
+        
         chartView.chartDescription.enabled = false
-        chartView.dragEnabled = true
-        chartView.setScaleEnabled(true)
-        chartView.pinchZoomEnabled = true
-
-        // x-axis limit line
-        let llXAxis = ChartLimitLine(limit: 10, label: "Index 10")
-        llXAxis.lineWidth = 4
-        llXAxis.lineDashLengths = [10, 10, 0]
-        llXAxis.labelPosition = .rightBottom
-        llXAxis.valueFont = .systemFont(ofSize: 10)
-
-        chartView.xAxis.gridLineDashLengths = [10, 10]
-        chartView.xAxis.gridLineDashPhase = 0
-
-        let ll1 = ChartLimitLine(limit: 150, label: "Upper Limit")
-        ll1.lineWidth = 4
-        ll1.lineDashLengths = [5, 5]
-        ll1.labelPosition = .rightTop
-        ll1.valueFont = .systemFont(ofSize: 10)
-
-        let ll2 = ChartLimitLine(limit: -30, label: "Lower Limit")
-        ll2.lineWidth = 4
-        ll2.lineDashLengths = [5,5]
-        ll2.labelPosition = .rightBottom
-        ll2.valueFont = .systemFont(ofSize: 10)
-
-        let leftAxis = chartView.leftAxis
-        leftAxis.removeAllLimitLines()
-        leftAxis.addLimitLine(ll1)
-        leftAxis.addLimitLine(ll2)
-        leftAxis.axisMaximum = 200
-        leftAxis.axisMinimum = -50
-        leftAxis.gridLineDashLengths = [5, 5]
-        leftAxis.drawLimitLinesBehindDataEnabled = true
-
+        chartView.dragEnabled = false
+        chartView.dragXEnabled = true
+        chartView.setScaleEnabled(false)
+        chartView.pinchZoomEnabled = false
+        chartView.doubleTapToZoomEnabled = false
+        chartView.zoom(scaleX: 2, scaleY: 1, x: 0, y: 0)
         chartView.rightAxis.enabled = false
-
-        //[_chartView.viewPortHandler setMaximumScaleY: 2.f];
-        //[_chartView.viewPortHandler setMaximumScaleX: 2.f];
-
-        let marker = BalloonMarker(color: UIColor(white: 180/255, alpha: 1),
-                                   font: .systemFont(ofSize: 12),
-                                   textColor: .white,
-                                   insets: UIEdgeInsets(top: 8, left: 8, bottom: 20, right: 8))
-        marker.chartView = chartView
-        marker.minimumSize = CGSize(width: 80, height: 40)
-        chartView.marker = marker
-
         chartView.legend.form = .line
 
-        sliderX.value = 45
-        sliderY.value = 100
-        slidersValueChanged(nil)
+        let xAxis = chartView.xAxis
+        xAxis.labelPosition = XAxis.LabelPosition.bottom
+        xAxis.axisLineColor = .red
+        xAxis.axisLineWidth = 10
+        xAxis.drawAxisLineEnabled = false
+        xAxis.drawGridLinesBehindDataEnabled = true
+        xAxis.drawGridLinesEnabled = true
+        xAxis.gridLineWidth = 0.5
+        xAxis.gridLineDashPhase = 0
+        xAxis.axisMaxLabels = 10
+        xAxis.valueFormatter = XAxisValueFormatter()
 
-        chartView.animate(xAxisDuration: 2.5)
+        let leftAxis = chartView.leftAxis
+        
+        leftAxis.axisMinimum = 0
+        leftAxis.axisMaximum = xy[xy.count - 1].yAxis + 5
+        
+        leftAxis.gridLineWidth = 0.5
+        leftAxis.drawLimitLinesBehindDataEnabled = true
+        leftAxis.drawGridLinesEnabled = true
+        leftAxis.valueFormatter = LeftAxisValueFormatter()
+
+        chartView.animate(xAxisDuration: 1)
+        updateChartData()
+    }
+    
+    class LeftAxisValueFormatter: AxisValueFormatter {
+        let formatter = NumberFormatter()
+        
+        init() {
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 2
+            formatter.numberStyle = .decimal
+        }
+        
+        func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+            guard let roundValue = formatter.string(from: value as NSNumber) else {
+                return "\(value)m"
+            }
+            return "\(roundValue)m"
+        }
+    }
+    
+    class XAxisValueFormatter: AxisValueFormatter {
+        let formatter = NumberFormatter()
+        
+        init() {
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 2
+            formatter.numberStyle = .decimal
+        }
+        
+        
+        func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+            guard let roundValue = formatter.string(from: value as NSNumber) else {
+                return "\(value)m"
+            }
+            return "\(roundValue)m"
+        }
     }
 
     override func updateChartData() {
@@ -105,30 +136,37 @@ class LineChart1ViewController: DemoBaseViewController {
             return
         }
 
-        self.setDataCount(Int(sliderX.value), range: UInt32(sliderY.value))
+        self.setDataCount()
     }
-
-    func setDataCount(_ count: Int, range: UInt32) {
-        let values = (0..<count).map { (i) -> ChartDataEntry in
-            let val = Double(arc4random_uniform(range) + 3)
-            return ChartDataEntry(x: Double(i), y: val, icon: #imageLiteral(resourceName: "icon"))
+    
+    func setDataCount() {
+        let values = xy.map { (i) -> ChartDataEntry in
+            return ChartDataEntry(x: i.xAxis, y: i.yAxis)
         }
 
-        let set1 = LineChartDataSet(entries: values, label: "DataSet 1")
-        set1.drawIconsEnabled = false
-        setup(set1)
+        let borderColor = UIColor(red: 74/255, green: 162/255, blue: 152/255, alpha: 1)
+        let fillColor = UIColor(red: 74/255, green: 162/255, blue: 152/255, alpha: 0.4)
+        let dataSet = LineChartDataSet(entries: values)
+        dataSet.label = nil
+        dataSet.drawFilledEnabled = false
+        dataSet.drawIconsEnabled = false
+        dataSet.drawCirclesEnabled = false
+        dataSet.gradientPositions = nil
+        dataSet.lineWidth = 1
+        dataSet.fillColor = borderColor
+        dataSet.drawCircleHoleEnabled = false
+        dataSet.valueFont = .systemFont(ofSize: 9)
+        dataSet.formLineDashLengths = [5, 2.5]
+        dataSet.formLineWidth = 1
+        dataSet.formSize = 15
+        dataSet.mode = .cubicBezier
+        dataSet.drawValuesEnabled = false
 
-        let value = ChartDataEntry(x: Double(3), y: 3)
-        set1.addEntryOrdered(value)
-        let gradientColors = [ChartColorTemplates.colorFromString("#00ff0000").cgColor,
-                              ChartColorTemplates.colorFromString("#ffff0000").cgColor]
-        let gradient = CGGradient(colorsSpace: nil, colors: gradientColors as CFArray, locations: nil)!
+        dataSet.fillAlpha = 1
+        dataSet.fill = ColorFill(cgColor: fillColor.cgColor)
+        dataSet.drawFilledEnabled = true
 
-        set1.fillAlpha = 1
-        set1.fill = LinearGradientFill(gradient: gradient, angle: 90)
-        set1.drawFilledEnabled = true
-
-        let data = LineChartData(dataSet: set1)
+        let data = LineChartData(dataSet: dataSet)
 
         chartView.data = data
     }
@@ -148,18 +186,17 @@ class LineChart1ViewController: DemoBaseViewController {
             dataSet.formLineWidth = 1
             dataSet.formSize = 15
         } else {
-            dataSet.lineDashLengths = [5, 2.5]
-            dataSet.highlightLineDashLengths = [5, 2.5]
-            dataSet.setColor(.black)
-            dataSet.setCircleColor(.black)
+            dataSet.drawCirclesEnabled = false
             dataSet.gradientPositions = nil
             dataSet.lineWidth = 1
-            dataSet.circleRadius = 3
+            dataSet.fillColor = UIColor(red: 74/255, green: 162/255, blue: 152/255, alpha: 0.7)
             dataSet.drawCircleHoleEnabled = false
             dataSet.valueFont = .systemFont(ofSize: 9)
             dataSet.formLineDashLengths = [5, 2.5]
             dataSet.formLineWidth = 1
             dataSet.formSize = 15
+            dataSet.mode = .cubicBezier
+            dataSet.drawValuesEnabled = false
         }
     }
 
@@ -205,12 +242,5 @@ class LineChart1ViewController: DemoBaseViewController {
         default:
             super.handleOption(option, forChartView: chartView)
         }
-    }
-
-    @IBAction func slidersValueChanged(_ sender: Any?) {
-        sliderTextX.text = "\(Int(sliderX.value))"
-        sliderTextY.text = "\(Int(sliderY.value))"
-
-        self.updateChartData()
     }
 }
